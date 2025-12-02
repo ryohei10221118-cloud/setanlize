@@ -350,13 +350,25 @@
         <h1 style="text-align: center; color: #667eea; margin-bottom: 20px;">⏰ 客服計時器工具</h1>
 
         <div class="input-section">
+            <!-- JSON 導入區 -->
+            <div style="margin-bottom: 20px; padding: 15px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #2196f3;">
+                <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="font-size: 20px;">📥</span>
+                    <span style="font-weight: 600; color: #1976d2;">JSON 數據導入（選填）</span>
+                </label>
+                <textarea id="jsonInput" placeholder="粘貼 JSON 數據，將自動提取注單號和賽事名稱..." style="width: 100%; min-height: 120px; padding: 12px; border: 2px solid #90caf9; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; resize: vertical;"></textarea>
+                <button class="btn-primary" onclick="importFromJSON()" style="margin-top: 10px;">🔄 導入數據</button>
+            </div>
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>💼 注單號</label>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="orderNumber" placeholder="請輸入注單號">
-                        <button class="btn-copy" onclick="copyText('orderNumber', this)">📋</button>
+                    <div class="event-inputs" id="orderInputs">
+                        <div class="event-input-row">
+                            <input type="text" class="order-input" placeholder="請輸入注單號 1">
+                        </div>
                     </div>
+                    <button class="btn-success" onclick="addOrderInput()" style="margin-top: 10px;">➕ 新增注單號</button>
                 </div>
 
                 <div class="form-group">
@@ -463,6 +475,33 @@
             ko: "해당 팀에 조사를 요청했으며, 진행 상황을 계속 알려드리겠습니다. 기다려 주셔서 감사합니다. - Sunny"
         };
 
+        // 注單號管理
+        function addOrderInput() {
+            const container = document.getElementById('orderInputs');
+            const row = document.createElement('div');
+            row.className = 'event-input-row';
+            row.innerHTML = `
+                <input type="text" class="order-input" placeholder="請輸入注單號 ${container.children.length + 1}">
+                <button class="btn-danger" onclick="removeOrderInput(this)">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeOrderInput(button) {
+            const container = document.getElementById('orderInputs');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+
+        function getOrderNumbers() {
+            const inputs = document.querySelectorAll('.order-input');
+            return Array.from(inputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+        }
+
+        // 賽事名稱管理
         function addEventInput() {
             const container = document.getElementById('eventInputs');
             const row = document.createElement('div');
@@ -488,6 +527,86 @@
                 .filter(value => value !== '');
         }
 
+        // JSON 導入功能
+        function importFromJSON() {
+            const jsonText = document.getElementById('jsonInput').value.trim();
+
+            if (!jsonText) {
+                alert('請先粘貼 JSON 數據！');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(jsonText);
+
+                // 提取注單號
+                let orderNumbers = [];
+                if (data.SQLTicketId) {
+                    orderNumbers.push(data.SQLTicketId.toString());
+                }
+                if (data.TicketId) {
+                    orderNumbers.push(data.TicketId.toString());
+                }
+
+                // 提取賽事名稱
+                let eventNames = [];
+                if (data.Selections && Array.isArray(data.Selections)) {
+                    data.Selections.forEach(selection => {
+                        if (selection.EventName) {
+                            eventNames.push(selection.EventName);
+                        }
+                    });
+                }
+
+                // 如果沒有從 Selections 提取到，嘗試其他字段
+                if (eventNames.length === 0) {
+                    if (data.EventName) {
+                        eventNames.push(data.EventName);
+                    }
+                }
+
+                // 清空現有輸入
+                const orderContainer = document.getElementById('orderInputs');
+                const eventContainer = document.getElementById('eventInputs');
+
+                // 填充注單號
+                if (orderNumbers.length > 0) {
+                    orderContainer.innerHTML = '';
+                    orderNumbers.forEach((orderNum, index) => {
+                        const row = document.createElement('div');
+                        row.className = 'event-input-row';
+                        row.innerHTML = `
+                            <input type="text" class="order-input" placeholder="請輸入注單號 ${index + 1}" value="${orderNum}">
+                            ${index > 0 ? '<button class="btn-danger" onclick="removeOrderInput(this)">×</button>' : ''}
+                        `;
+                        orderContainer.appendChild(row);
+                    });
+                }
+
+                // 填充賽事名稱
+                if (eventNames.length > 0) {
+                    eventContainer.innerHTML = '';
+                    eventNames.forEach((eventName, index) => {
+                        const row = document.createElement('div');
+                        row.className = 'event-input-row';
+                        row.innerHTML = `
+                            <input type="text" class="event-input" placeholder="請輸入賽事名稱 ${index + 1}" value="${eventName}">
+                            ${index > 0 ? '<button class="btn-danger" onclick="removeEventInput(this)">×</button>' : ''}
+                        `;
+                        eventContainer.appendChild(row);
+                    });
+                }
+
+                alert(`✅ 導入成功！\n注單號：${orderNumbers.length} 個\n賽事：${eventNames.length} 個`);
+
+                // 清空 JSON 輸入框
+                document.getElementById('jsonInput').value = '';
+
+            } catch (error) {
+                alert('❌ JSON 解析失敗：' + error.message);
+            }
+        }
+
         function copyText(elementId, button) {
             const element = document.getElementById(elementId);
             const text = element.value;
@@ -503,19 +622,19 @@
         }
 
         function addTimer() {
-            const orderNumber = document.getElementById('orderNumber').value.trim();
+            const orderNumbers = getOrderNumbers();
             const eventNames = getEventNames();
             const requirements = document.getElementById('requirements').value.trim();
             const groupName = document.getElementById('groupName').value.trim();
             const additionalInfo = document.getElementById('additionalInfo').value.trim();
 
-            if (!orderNumber || eventNames.length === 0 || !requirements || !groupName) {
+            if (orderNumbers.length === 0 || eventNames.length === 0 || !requirements || !groupName) {
                 alert('請填寫所有必要欄位！');
                 return;
             }
 
             // 生成摘要
-            const summaryParts = [orderNumber, ...eventNames, requirements, groupName];
+            const summaryParts = [...orderNumbers, ...eventNames, requirements, groupName];
             if (additionalInfo) summaryParts.push(additionalInfo);
             const summary = summaryParts.join('\n');
 
@@ -526,7 +645,7 @@
             // 創建計時器
             const timer = {
                 id: Date.now(),
-                orderNumber,
+                orderNumbers,  // 改為複數
                 eventNames,
                 requirements,
                 groupName,
@@ -543,7 +662,7 @@
             renderTimers();
 
             // 清空表單
-            document.getElementById('orderNumber').value = '';
+            document.querySelectorAll('.order-input').forEach(input => input.value = '');
             document.querySelectorAll('.event-input').forEach(input => input.value = '');
             document.getElementById('requirements').value = '';
             document.getElementById('groupName').value = '';
@@ -605,8 +724,9 @@
             const { title, timer, reminder } = modalData;
 
             document.getElementById('modalTitle').textContent = title;
+            const orderNums = timer.orderNumbers || [timer.orderNumber];
             document.getElementById('modalInfo').innerHTML = `
-                <div style="font-weight: 600; margin-bottom: 5px;">💼 注單號: ${timer.orderNumber}</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">💼 注單號: ${orderNums.join(', ')}</div>
                 <div style="margin-bottom: 5px;">🏆 ${timer.eventNames.join(', ')}</div>
                 <div style="font-weight: 600;">👥 群組: ${timer.groupName}</div>
             `;
@@ -757,12 +877,16 @@
                         ${group.timers.map(timer => `
                             <div class="timer-card">
                                 <div class="timer-header">
-                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-                                        <span style="font-size: 12px;">💼</span>
-                                        <span style="font-weight: 600; font-size: 14px; color: #2d3748; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                            ${timer.orderNumber}
-                                        </span>
-                                        <button class="btn-copy" onclick="copyTimerOrder('${timer.orderNumber}', this)" style="padding: 4px 8px;">📋</button>
+                                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0;">
+                                        ${(timer.orderNumbers || [timer.orderNumber]).map((orderNum, idx) => `
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span style="font-size: 12px;">💼</span>
+                                                <span style="font-weight: 600; font-size: 14px; color: #2d3748; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    ${orderNum}
+                                                </span>
+                                                <button class="btn-copy" onclick="copyTimerOrder('${orderNum}', this)" style="padding: 4px 8px;">📋</button>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                     <div style="text-align: right;">
                                         <div class="timer-display">
