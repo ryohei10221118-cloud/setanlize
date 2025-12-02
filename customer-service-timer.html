@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客服計時器工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .event-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .event-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-warning {
+            background: #ed8936;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #dd6b20;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-copy {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 8px 12px;
+            min-width: 40px;
+        }
+
+        .btn-copy.copied {
+            background: #48bb78;
+            color: white;
+        }
+
+        .timer-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .timer-group {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .group-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .event-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .event-tag {
+            background: #ebf8ff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .timer-card {
+            background: #f8f9fa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .timer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .timer-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: monospace;
+        }
+
+        .timer-stage {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .timer-info {
+            font-size: 13px;
+            color: #4a5568;
+            margin: 5px 0;
+        }
+
+        .timer-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: #fc8181;
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .language-section {
+            margin-bottom: 20px;
+        }
+
+        .language-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .language-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .extra-events {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .status-pending {
+            background: #feb2b2;
+            color: #742a2a;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-display {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #667eea; margin-bottom: 20px;">⏰ 客服計時器工具</h1>
+
+        <div class="input-section">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>💼 注單號</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="orderNumber" placeholder="請輸入注單號">
+                        <button class="btn-copy" onclick="copyText('orderNumber', this)">📋</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>🏆 賽事名稱</label>
+                    <div class="event-inputs" id="eventInputs">
+                        <div class="event-input-row">
+                            <input type="text" class="event-input" placeholder="請輸入賽事名稱 1">
+                        </div>
+                    </div>
+                    <button class="btn-success" onclick="addEventInput()" style="margin-top: 10px;">➕ 新增賽事</button>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>📋 需求</label>
+                    <input type="text" id="requirements" placeholder="請輸入需求">
+                </div>
+
+                <div class="form-group">
+                    <label>👥 群組名稱</label>
+                    <input type="text" id="groupName" placeholder="請輸入群組名稱">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>📄 附加資訊（選填）</label>
+                <input type="text" id="additionalInfo" placeholder="請輸入附加資訊">
+            </div>
+
+            <button class="btn-primary" onclick="addTimer()">⏰ 添加計時器</button>
+        </div>
+
+        <div class="timer-groups" id="timerGroups"></div>
+    </div>
+
+    <!-- 提醒彈窗 -->
+    <div class="modal" id="reminderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <span style="font-size: 20px;">⚠️</span>
+                    <span id="modalTitle" style="font-weight: 600; margin-left: 10px;"></span>
+                </div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="info-box" id="modalInfo"></div>
+
+                <div class="language-section">
+                    <div class="language-header">🇨🇳 中文</div>
+                    <div class="language-content" id="contentZh"></div>
+                    <button class="btn-success" onclick="copyLanguage('zh')" style="width: 100%;" id="copyZh">📋 複製中文</button>
+                </div>
+
+                <div class="language-section">
+                    <div class="language-header">🇺🇸 English</div>
+                    <div class="language-content" id="contentEn"></div>
+                    <button class="btn-success" onclick="copyLanguage('en')" style="width: 100%;" id="copyEn">📋 複製英文</button>
+                </div>
+
+                <div class="language-section">
+                    <div class="language-header">🇰🇷 한국어</div>
+                    <div class="language-content" id="contentKo"></div>
+                    <button class="btn-success" onclick="copyLanguage('ko')" style="width: 100%;" id="copyKo">📋 複製韓文</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 摘要彈窗 -->
+    <div class="modal" id="summaryModal">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #667eea;">
+                <span style="font-weight: 600;">📝 計時器摘要</span>
+                <button class="modal-close" onclick="closeSummaryModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="language-content" id="summaryContent" style="margin-bottom: 20px;"></div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-success" onclick="copySummary()" style="flex: 1;">📋 複製摘要</button>
+                    <button class="btn-secondary" onclick="closeSummaryModal()">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const timers = [];
+        const intervalRefs = {};
+        const modalQueue = [];
+        let isProcessingModal = false;
+        let currentModalData = null;
+
+        const firstReminder = {
+            zh: "已为您反馈至相关单位查询中，请您稍候。 - Sunny",
+            en: "One moment. We have submitted it to the relevant department. - Sunny",
+            ko: "잠시만요. 관련 부서에 제출했습니다. - Sunny"
+        };
+
+        const secondReminder = {
+            zh: "已为您提交相关单位确认，若有进一步更新，将会立即与您告知，提前感谢您的耐心。 - Sunny",
+            en: "We have escalated to the relevant team for investigation and we will keep you posted. Thank you for your patience. - Sunny",
+            ko: "해당 팀에 조사를 요청했으며, 진행 상황을 계속 알려드리겠습니다. 기다려 주셔서 감사합니다. - Sunny"
+        };
+
+        function addEventInput() {
+            const container = document.getElementById('eventInputs');
+            const row = document.createElement('div');
+            row.className = 'event-input-row';
+            row.innerHTML = `
+                <input type="text" class="event-input" placeholder="請輸入賽事名稱 ${container.children.length + 1}">
+                <button class="btn-danger" onclick="removeEventInput(this)">×</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeEventInput(button) {
+            const container = document.getElementById('eventInputs');
+            if (container.children.length > 1) {
+                button.parentElement.remove();
+            }
+        }
+
+        function getEventNames() {
+            const inputs = document.querySelectorAll('.event-input');
+            return Array.from(inputs)
+                .map(input => input.value.trim())
+                .filter(value => value !== '');
+        }
+
+        function copyText(elementId, button) {
+            const element = document.getElementById(elementId);
+            const text = element.value;
+
+            navigator.clipboard.writeText(text).then(() => {
+                button.textContent = '✓';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '📋';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function addTimer() {
+            const orderNumber = document.getElementById('orderNumber').value.trim();
+            const eventNames = getEventNames();
+            const requirements = document.getElementById('requirements').value.trim();
+            const groupName = document.getElementById('groupName').value.trim();
+            const additionalInfo = document.getElementById('additionalInfo').value.trim();
+
+            if (!orderNumber || eventNames.length === 0 || !requirements || !groupName) {
+                alert('請填寫所有必要欄位！');
+                return;
+            }
+
+            // 生成摘要
+            const summaryParts = [orderNumber, ...eventNames, requirements, groupName];
+            if (additionalInfo) summaryParts.push(additionalInfo);
+            const summary = summaryParts.join('\n');
+
+            // 顯示摘要彈窗
+            document.getElementById('summaryContent').textContent = summary;
+            document.getElementById('summaryModal').classList.add('show');
+
+            // 創建計時器
+            const timer = {
+                id: Date.now(),
+                orderNumber,
+                eventNames,
+                requirements,
+                groupName,
+                additionalInfo,
+                timeLeft: 540,
+                stage: 1,
+                completed: false,
+                locked: false,
+                resetCount: 0
+            };
+
+            timers.push(timer);
+            startTimer(timer.id);
+            renderTimers();
+
+            // 清空表單
+            document.getElementById('orderNumber').value = '';
+            document.querySelectorAll('.event-input').forEach(input => input.value = '');
+            document.getElementById('requirements').value = '';
+            document.getElementById('groupName').value = '';
+            document.getElementById('additionalInfo').value = '';
+        }
+
+        function startTimer(timerId) {
+            if (intervalRefs[timerId]) {
+                clearInterval(intervalRefs[timerId]);
+            }
+
+            intervalRefs[timerId] = setInterval(() => {
+                const timer = timers.find(t => t.id === timerId);
+                if (!timer || timer.completed || timer.locked) {
+                    clearInterval(intervalRefs[timerId]);
+                    return;
+                }
+
+                timer.timeLeft--;
+
+                if (timer.timeLeft === 0) {
+                    clearInterval(intervalRefs[timerId]);
+
+                    if (timer.stage === 1) {
+                        showReminder(timer, firstReminder, '第1次提醒！');
+                        timer.timeLeft = 540;
+                        timer.stage = 2;
+                    } else if (timer.stage === 2) {
+                        showReminder(timer, secondReminder, '第2次提醒！');
+                        timer.completed = true;
+                    }
+                }
+
+                renderTimers();
+            }, 1000);
+        }
+
+        function showReminder(timer, reminder, title) {
+            const modalData = {
+                title,
+                timer,
+                reminder
+            };
+
+            modalQueue.push(modalData);
+            processModalQueue();
+        }
+
+        function processModalQueue() {
+            if (modalQueue.length > 0 && !isProcessingModal) {
+                isProcessingModal = true;
+                const modalData = modalQueue.shift();
+                currentModalData = modalData;
+                displayModal(modalData);
+            }
+        }
+
+        function displayModal(modalData) {
+            const { title, timer, reminder } = modalData;
+
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalInfo').innerHTML = `
+                <div style="font-weight: 600; margin-bottom: 5px;">💼 注單號: ${timer.orderNumber}</div>
+                <div style="margin-bottom: 5px;">🏆 ${timer.eventNames.join(', ')}</div>
+                <div style="font-weight: 600;">👥 群組: ${timer.groupName}</div>
+            `;
+
+            document.getElementById('contentZh').textContent = `${timer.eventNames.join('\n')}\n${reminder.zh}`;
+            document.getElementById('contentEn').textContent = `${timer.eventNames.join('\n')}\n${reminder.en}`;
+            document.getElementById('contentKo').textContent = `${timer.eventNames.join('\n')}\n${reminder.ko}`;
+
+            document.getElementById('reminderModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('reminderModal').classList.remove('show');
+            isProcessingModal = false;
+            currentModalData = null;
+
+            // 如果有第二階段的計時器需要重啟
+            setTimeout(() => {
+                timers.forEach(timer => {
+                    if (timer.stage === 2 && timer.timeLeft === 540 && !timer.completed && !timer.locked) {
+                        startTimer(timer.id);
+                    }
+                });
+            }, 100);
+
+            processModalQueue();
+        }
+
+        function copyLanguage(lang) {
+            const content = document.getElementById(`content${lang.charAt(0).toUpperCase() + lang.slice(1)}`).textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                const button = document.getElementById(`copy${lang.charAt(0).toUpperCase() + lang.slice(1)}`);
+                const originalText = button.textContent;
+                button.textContent = '✓ 已複製';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function closeSummaryModal() {
+            document.getElementById('summaryModal').classList.remove('show');
+        }
+
+        function copySummary() {
+            const content = document.getElementById('summaryContent').textContent;
+            navigator.clipboard.writeText(content).then(() => {
+                closeSummaryModal();
+            });
+        }
+
+        function resetTimer(timerId) {
+            const timer = timers.find(t => t.id === timerId);
+            if (!timer || timer.resetCount >= 2) return;
+
+            timer.resetCount++;
+
+            if (intervalRefs[timerId]) {
+                clearInterval(intervalRefs[timerId]);
+            }
+
+            if (timer.resetCount === 2) {
+                showReminder(timer, secondReminder, '第2次提醒！');
+                timer.locked = true;
+                timer.timeLeft = 0;
+            } else {
+                showReminder(timer, firstReminder, '第1次提醒！');
+                timer.timeLeft = 540;
+                timer.stage = 2;
+                setTimeout(() => startTimer(timerId), 100);
+            }
+
+            renderTimers();
+        }
+
+        function removeTimer(timerId) {
+            if (intervalRefs[timerId]) {
+                clearInterval(intervalRefs[timerId]);
+                delete intervalRefs[timerId];
+            }
+            const index = timers.findIndex(t => t.id === timerId);
+            if (index > -1) {
+                timers.splice(index, 1);
+                renderTimers();
+            }
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function groupTimersByEvent() {
+            const grouped = {};
+
+            timers.forEach(timer => {
+                let foundGroup = null;
+
+                for (const [key, group] of Object.entries(grouped)) {
+                    const commonEvents = timer.eventNames.filter(event =>
+                        group.eventNames.includes(event)
+                    );
+
+                    if (commonEvents.length > 0) {
+                        foundGroup = key;
+                        break;
+                    }
+                }
+
+                if (foundGroup) {
+                    grouped[foundGroup].timers.push(timer);
+                } else {
+                    const eventKey = timer.eventNames.sort().join('|');
+                    grouped[eventKey] = {
+                        eventNames: [...timer.eventNames],
+                        timers: [timer]
+                    };
+                }
+            });
+
+            return Object.values(grouped);
+        }
+
+        function renderTimers() {
+            const container = document.getElementById('timerGroups');
+            const groups = groupTimersByEvent();
+
+            if (groups.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 40px;">尚無計時器</div>';
+                return;
+            }
+
+            container.innerHTML = groups.map(group => `
+                <div class="timer-group">
+                    <div class="group-header">
+                        <h3 style="margin-bottom: 10px;">🏆 賽事</h3>
+                        <div class="event-tags">
+                            ${group.eventNames.map(eventName => `
+                                <div class="event-tag">
+                                    <span>${eventName}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="timer-grid">
+                        ${group.timers.map(timer => `
+                            <div class="timer-card">
+                                <div class="timer-header">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+                                        <span style="font-size: 12px;">💼</span>
+                                        <span style="font-weight: 600; font-size: 14px; color: #2d3748; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            ${timer.orderNumber}
+                                        </span>
+                                        <button class="btn-copy" onclick="copyTimerOrder('${timer.orderNumber}', this)" style="padding: 4px 8px;">📋</button>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div class="timer-display">
+                                            ${timer.locked ? 'Pending' : timer.completed ? '✅' : formatTime(timer.timeLeft)}
+                                        </div>
+                                        <div class="timer-stage">
+                                            ${timer.locked ? 'Pending' : `第${timer.stage}次`}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-top: 10px;">
+                                    <div class="timer-info">📋 ${timer.requirements}</div>
+                                    <div class="timer-info">👥 ${timer.groupName}</div>
+                                </div>
+
+                                <div class="timer-actions">
+                                    ${!timer.completed && !timer.locked && timer.resetCount < 2 ? `
+                                        <button class="btn-warning" onclick="resetTimer(${timer.id})" style="font-size: 12px; padding: 6px 12px;">
+                                            🔄 重新計時
+                                        </button>
+                                    ` : ''}
+                                    ${timer.locked ? `
+                                        <span class="status-pending">Pending</span>
+                                    ` : ''}
+                                    <button class="btn-danger" onclick="removeTimer(${timer.id})" style="font-size: 12px; padding: 6px 12px;">
+                                        🗑️ 移除
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function copyTimerOrder(orderNumber, button) {
+            navigator.clipboard.writeText(orderNumber).then(() => {
+                button.textContent = '✓';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = '📋';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // 初始化
+        renderTimers();
+    </script>
+</body>
+</html>
