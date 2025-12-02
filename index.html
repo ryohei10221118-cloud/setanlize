@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客服工具集</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .tool-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .tool-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .tool-description {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .tool-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .tool-features li {
+            padding: 8px 0;
+            color: #555;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .tool-features li:last-child {
+            border-bottom: none;
+        }
+
+        .tool-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tool-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-card {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ 客服工具集</h1>
+            <p>專業的客服輔助工具，提升工作效率</p>
+        </div>
+
+        <div class="tools-grid">
+            <a href="event-status-checker.html" class="tool-card">
+                <div class="tool-icon">🎯</div>
+                <div class="tool-title">賽事狀態檢查工具</div>
+                <div class="tool-description">
+                    自動檢查投注賽事狀態並生成多語言快捷語，支持 UTC 時區轉換和定時提醒功能。
+                </div>
+                <ul class="tool-features">
+                    <li>✅ 未結算/已結算賽事檢查</li>
+                    <li>✅ UTC+0 到 UTC+8 時區轉換</li>
+                    <li>✅ 中英韓三語快捷語</li>
+                    <li>✅ 9分鐘定時提醒</li>
+                    <li>✅ 群組名稱功能</li>
+                </ul>
+                <div class="tool-button">開始使用 →</div>
+            </a>
+
+            <a href="customer-service-timer.html" class="tool-card">
+                <div class="tool-icon">⏰</div>
+                <div class="tool-title">客服計時器工具</div>
+                <div class="tool-description">
+                    追蹤客戶查詢的雙階段計時器，自動提醒回覆時間，支持多賽事管理和自動分組。
+                </div>
+                <ul class="tool-features">
+                    <li>✅ 雙階段計時（9分鐘×2）</li>
+                    <li>✅ 多賽事自動分組</li>
+                    <li>✅ 中英韓三語提醒</li>
+                    <li>✅ 重置功能（最多2次）</li>
+                    <li>✅ 彈窗提醒系統</li>
+                </ul>
+                <div class="tool-button">開始使用 →</div>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 客服工具集 | 純前端工具，無需服務器</p>
+        </div>
+    </div>
+</body>
+</html>
