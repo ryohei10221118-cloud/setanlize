@@ -76,6 +76,31 @@
             border-color: #667eea;
         }
 
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .group-name-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
         .button-group {
             display: flex;
             gap: 15px;
@@ -338,6 +363,11 @@
                 <textarea id="jsonInput" placeholder='粘贴JSON数据，例如：{ "IsArchived": false, "UpdateDate": "2025-12-02T17:23:42.4816398", ... }'></textarea>
             </div>
 
+            <div class="input-section">
+                <label for="groupName">群组名称：</label>
+                <input type="text" id="groupName" placeholder="请输入群组名称（赛事已开赛时会在快捷语中显示）">
+            </div>
+
             <div class="button-group">
                 <button class="btn-analyze" onclick="analyzeData()">🔍 分析数据</button>
                 <button class="btn-clear" onclick="clearAll()">🗑️ 清除</button>
@@ -366,6 +396,7 @@
         // 清除所有内容
         function clearAll() {
             document.getElementById('jsonInput').value = '';
+            document.getElementById('groupName').value = '';
             document.getElementById('resultSection').classList.remove('show');
             document.getElementById('resultContent').innerHTML = '';
             if (reminderTimer) {
@@ -425,37 +456,41 @@
         }
 
         // 生成快捷语
-        function generateQuickResponse(data, isEventStarted, isSettled) {
+        function generateQuickResponse(data, isEventStarted, isSettled, groupName) {
             const selection = data.Selections && data.Selections[0];
             if (!selection) return null;
 
             const eventName = selection.EventName || '未知赛事';
-            const leagueName = selection.LeagueName || '未知联赛';
-            const sportName = selection.SportName || '未知运动';
             const translations = selection.Translations || {};
 
-            // 这里可以根据实际需求自定义快捷语模板
             let quickResponse = {
                 zh: '',
                 en: '',
-                ko: ''
+                ko: '',
+                groupName: groupName || ''
             };
 
             if (isSettled) {
-                // 已结算的赛事
-                quickResponse.zh = `【已结算赛事】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：已结算\n请提交至相关单位处理。`;
-                quickResponse.en = `[Settled Event]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: Settled\nPlease submit to relevant department.`;
-                quickResponse.ko = `[정산된 이벤트]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 정산됨\n관련 부서에 제출하십시오.`;
+                // 已结算的赛事 - 保持原有模板
+                quickResponse.zh = `【已结算赛事】\n赛事：${eventName}\n状态：已结算\n请提交至相关单位处理。`;
+                quickResponse.en = `[Settled Event]\nEvent: ${eventName}\nStatus: Settled\nPlease submit to relevant department.`;
+                quickResponse.ko = `[정산된 이벤트]\n이벤트: ${translations.EventName || eventName}\n상태: 정산됨\n관련 부서에 제출하십시오.`;
             } else if (isEventStarted) {
-                // 赛事已开始但未结算
-                quickResponse.zh = `【赛事已开始-未结算】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：进行中但未结算\n请提交至相关单位处理。`;
-                quickResponse.en = `[Event Started - Unsettled]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: In Progress but Unsettled\nPlease submit to relevant department.`;
-                quickResponse.ko = `[이벤트 시작됨 - 미정산]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 진행 중이지만 미정산\n관련 부서에 제출하십시오.`;
+                // 赛事已开始但未结算 - 使用新模板
+                if (groupName) {
+                    quickResponse.zh = `${eventName}\n${groupName}\nset pls`;
+                    quickResponse.en = `${eventName}\n${groupName}\nset pls`;
+                    quickResponse.ko = `${translations.EventName || eventName}\n${groupName}\nset pls`;
+                } else {
+                    quickResponse.zh = `${eventName}\nset pls`;
+                    quickResponse.en = `${eventName}\nset pls`;
+                    quickResponse.ko = `${translations.EventName || eventName}\nset pls`;
+                }
             } else {
-                // 赛事未开始
-                quickResponse.zh = `【赛事未开始】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：赛事尚未开始\n请耐心等待赛事开始。`;
-                quickResponse.en = `[Event Not Started]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: Event has not started yet\nPlease wait for the event to start.`;
-                quickResponse.ko = `[이벤트 시작 안 됨]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 이벤트가 아직 시작되지 않았습니다\n이벤트 시작을 기다려 주십시오.`;
+                // 赛事未开始 - 使用新模板
+                quickResponse.zh = `${eventName}\n尚未开赛，注单会在赛事结束后尽快结算。 - Sunny`;
+                quickResponse.en = `${eventName}\nEvent hasn't/haven't started, related bet(s) will be settled afterward. - Sunny`;
+                quickResponse.ko = `${translations.EventName || eventName}\n아직 경기가 시작되지 않았습니다. 베팅은 경기 종료 후 가능한 한 빨리 정산됩니다. - Sunny`;
             }
 
             return quickResponse;
@@ -517,6 +552,7 @@
         // 分析数据
         function analyzeData() {
             const input = document.getElementById('jsonInput').value.trim();
+            const groupName = document.getElementById('groupName').value.trim();
 
             if (!input) {
                 showError('请输入JSON数据');
@@ -562,7 +598,7 @@
                 const marketName = selection.MarketName || '';
 
                 // 生成快捷语
-                const quickResponse = generateQuickResponse(data, isEventStarted, isSettled);
+                const quickResponse = generateQuickResponse(data, isEventStarted, isSettled, groupName);
 
                 // 确定状态标签
                 let statusHTML = '';
@@ -591,6 +627,12 @@
                                 <label>赛事名称</label>
                                 <div class="value">${eventName}</div>
                             </div>
+                            ${groupName && isEventStarted && isUnsettled ? `
+                            <div class="info-item">
+                                <label>群组名称</label>
+                                <div class="value"><span class="group-name-display">${groupName}</span></div>
+                            </div>
+                            ` : ''}
                             <div class="info-item">
                                 <label>联赛</label>
                                 <div class="value">${leagueName}</div>
