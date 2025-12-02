@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛事状态检查工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-clear {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .result-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-item label {
+            font-weight: 600;
+            color: #666;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-item .value {
+            color: #333;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-unsettled {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-settled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-started {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-not-started {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .quick-response {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .quick-response h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .quick-response-content {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .copy-btn.copied {
+            background: #4caf50;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid #667eea;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .notification-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-close:hover {
+            color: #333;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f44336;
+            margin-bottom: 20px;
+        }
+
+        .reminder-section {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .reminder-section h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .reminder-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #2e7d32;
+        }
+
+        .reminder-info svg {
+            width: 20px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 赛事状态检查工具</h1>
+            <p>自动检查赛事状态并生成快捷语 | 支持中英韩三语</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <label for="jsonInput">请粘贴投注JSON数据：</label>
+                <textarea id="jsonInput" placeholder='粘贴JSON数据，例如：{ "IsArchived": false, "UpdateDate": "2025-12-02T17:23:42.4816398", ... }'></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-analyze" onclick="analyzeData()">🔍 分析数据</button>
+                <button class="btn-clear" onclick="clearAll()">🗑️ 清除</button>
+            </div>
+
+            <div id="resultSection" class="result-section">
+                <div id="resultContent"></div>
+            </div>
+
+            <div class="reminder-section">
+                <h4>⏰ 自动提醒设置</h4>
+                <div class="reminder-info">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/>
+                    </svg>
+                    <span>每9分钟自动提醒一次（分析后自动启动）</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reminderTimer = null;
+        let lastAnalyzedData = null;
+
+        // 清除所有内容
+        function clearAll() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('resultSection').classList.remove('show');
+            document.getElementById('resultContent').innerHTML = '';
+            if (reminderTimer) {
+                clearInterval(reminderTimer);
+                reminderTimer = null;
+            }
+            lastAnalyzedData = null;
+        }
+
+        // 显示错误消息
+        function showError(message) {
+            const resultSection = document.getElementById('resultSection');
+            const resultContent = document.getElementById('resultContent');
+
+            resultContent.innerHTML = `
+                <div class="error-message">
+                    <strong>错误：</strong> ${message}
+                </div>
+            `;
+            resultSection.classList.add('show');
+        }
+
+        // 转换UTC+0到UTC+8
+        function convertToUTC8(utcDateString) {
+            const date = new Date(utcDateString);
+            // 加8小时
+            date.setHours(date.getHours() + 8);
+            return date;
+        }
+
+        // 格式化日期时间
+        function formatDateTime(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ 已复制';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('复制失败，请手动复制');
+            });
+        }
+
+        // 生成快捷语
+        function generateQuickResponse(data, isEventStarted, isSettled) {
+            const selection = data.Selections && data.Selections[0];
+            if (!selection) return null;
+
+            const eventName = selection.EventName || '未知赛事';
+            const leagueName = selection.LeagueName || '未知联赛';
+            const sportName = selection.SportName || '未知运动';
+            const translations = selection.Translations || {};
+
+            // 这里可以根据实际需求自定义快捷语模板
+            let quickResponse = {
+                zh: '',
+                en: '',
+                ko: ''
+            };
+
+            if (isSettled) {
+                // 已结算的赛事
+                quickResponse.zh = `【已结算赛事】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：已结算\n请提交至相关单位处理。`;
+                quickResponse.en = `[Settled Event]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: Settled\nPlease submit to relevant department.`;
+                quickResponse.ko = `[정산된 이벤트]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 정산됨\n관련 부서에 제출하십시오.`;
+            } else if (isEventStarted) {
+                // 赛事已开始但未结算
+                quickResponse.zh = `【赛事已开始-未结算】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：进行中但未结算\n请提交至相关单位处理。`;
+                quickResponse.en = `[Event Started - Unsettled]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: In Progress but Unsettled\nPlease submit to relevant department.`;
+                quickResponse.ko = `[이벤트 시작됨 - 미정산]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 진행 중이지만 미정산\n관련 부서에 제출하십시오.`;
+            } else {
+                // 赛事未开始
+                quickResponse.zh = `【赛事未开始】\n赛事：${eventName}\n联赛：${leagueName}\n运动：${sportName}\n状态：赛事尚未开始\n请耐心等待赛事开始。`;
+                quickResponse.en = `[Event Not Started]\nEvent: ${eventName}\nLeague: ${leagueName}\nSport: ${sportName}\nStatus: Event has not started yet\nPlease wait for the event to start.`;
+                quickResponse.ko = `[이벤트 시작 안 됨]\n이벤트: ${translations.EventName || eventName}\n리그: ${translations.LeagueName || leagueName}\n스포츠: ${translations.SportName || sportName}\n상태: 이벤트가 아직 시작되지 않았습니다\n이벤트 시작을 기다려 주십시오.`;
+            }
+
+            return quickResponse;
+        }
+
+        // 显示通知
+        function showNotification(eventName, quickResponse) {
+            // 移除旧通知
+            const oldNotification = document.querySelector('.notification');
+            if (oldNotification) {
+                oldNotification.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+                <h3>⏰ 定时提醒</h3>
+                <p style="margin-bottom: 15px;"><strong>${eventName}</strong></p>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                    <div style="margin-bottom: 10px;">
+                        <strong>中文：</strong><br>
+                        <span style="font-size: 12px;">${quickResponse.zh.replace(/\n/g, '<br>')}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>English：</strong><br>
+                        <span style="font-size: 12px;">${quickResponse.en.replace(/\n/g, '<br>')}</span>
+                    </div>
+                    <div>
+                        <strong>한국어：</strong><br>
+                        <span style="font-size: 12px;">${quickResponse.ko.replace(/\n/g, '<br>')}</span>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // 10秒后自动关闭
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+
+        // 启动9分钟定时提醒
+        function startReminder(eventName, quickResponse) {
+            // 清除之前的定时器
+            if (reminderTimer) {
+                clearInterval(reminderTimer);
+            }
+
+            // 设置9分钟（540000毫秒）定时器
+            reminderTimer = setInterval(() => {
+                showNotification(eventName, quickResponse);
+            }, 540000); // 9分钟 = 9 * 60 * 1000 = 540000毫秒
+        }
+
+        // 分析数据
+        function analyzeData() {
+            const input = document.getElementById('jsonInput').value.trim();
+
+            if (!input) {
+                showError('请输入JSON数据');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(input);
+                lastAnalyzedData = data;
+
+                // 获取选择信息
+                const selection = data.Selections && data.Selections[0];
+                if (!selection) {
+                    showError('JSON数据中未找到Selections信息');
+                    return;
+                }
+
+                // 获取状态
+                const selectionStatus = selection.SelectionStatus;
+                const isSettled = selectionStatus === 1 || selectionStatus === 16 || selectionStatus === 17;
+                const isUnsettled = selectionStatus === 0;
+
+                // 获取赛事开始时间（UTC+0）
+                const startEventDateUTC = selection.StartEventDate;
+                if (!startEventDateUTC) {
+                    showError('未找到赛事开始时间');
+                    return;
+                }
+
+                // 转换为UTC+8
+                const startEventDateUTC8 = convertToUTC8(startEventDateUTC);
+                const currentDateUTC8 = new Date(new Date().getTime() + (8 * 60 * 60 * 1000));
+
+                // 判断赛事是否已经开始
+                const isEventStarted = currentDateUTC8 >= startEventDateUTC8;
+
+                // 获取赛事信息
+                const eventName = selection.EventName || '未知赛事';
+                const leagueName = selection.LeagueName || '未知联赛';
+                const sportName = selection.SportName || '未知运动';
+                const team1Name = selection.Team1Name || '';
+                const team2Name = selection.Team2Name || '';
+                const marketName = selection.MarketName || '';
+
+                // 生成快捷语
+                const quickResponse = generateQuickResponse(data, isEventStarted, isSettled);
+
+                // 确定状态标签
+                let statusHTML = '';
+                let statusClass = '';
+
+                if (isSettled) {
+                    statusHTML = '<span class="status-badge status-settled">已结算</span>';
+                    statusClass = 'settled';
+                } else if (isUnsettled) {
+                    statusHTML = '<span class="status-badge status-unsettled">未结算</span>';
+                    if (isEventStarted) {
+                        statusHTML += ' <span class="status-badge status-started">赛事已开始</span>';
+                    } else {
+                        statusHTML += ' <span class="status-badge status-not-started">赛事未开始</span>';
+                    }
+                    statusClass = isEventStarted ? 'started' : 'not-started';
+                }
+
+                // 生成结果HTML
+                const resultHTML = `
+                    <div class="result-card">
+                        <h3>📊 赛事分析结果</h3>
+
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>赛事名称</label>
+                                <div class="value">${eventName}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>联赛</label>
+                                <div class="value">${leagueName}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>运动类型</label>
+                                <div class="value">${sportName}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>状态</label>
+                                <div class="value">${statusHTML}</div>
+                            </div>
+                            ${team1Name ? `
+                            <div class="info-item">
+                                <label>队伍1</label>
+                                <div class="value">${team1Name}</div>
+                            </div>
+                            ` : ''}
+                            ${team2Name ? `
+                            <div class="info-item">
+                                <label>队伍2</label>
+                                <div class="value">${team2Name}</div>
+                            </div>
+                            ` : ''}
+                            <div class="info-item">
+                                <label>开始时间 (UTC+8)</label>
+                                <div class="value">${formatDateTime(startEventDateUTC8)}</div>
+                            </div>
+                            <div class="info-item">
+                                <label>当前时间 (UTC+8)</label>
+                                <div class="value">${formatDateTime(currentDateUTC8)}</div>
+                            </div>
+                        </div>
+
+                        ${quickResponse ? `
+                        <div class="quick-response">
+                            <h4>📝 快捷语 - 中文</h4>
+                            <div class="quick-response-content">
+                                <button class="copy-btn" onclick="copyToClipboard(\`${quickResponse.zh}\`, this)">复制</button>
+                                ${quickResponse.zh}
+                            </div>
+                        </div>
+
+                        <div class="quick-response">
+                            <h4>📝 Quick Response - English</h4>
+                            <div class="quick-response-content">
+                                <button class="copy-btn" onclick="copyToClipboard(\`${quickResponse.en}\`, this)">Copy</button>
+                                ${quickResponse.en}
+                            </div>
+                        </div>
+
+                        <div class="quick-response">
+                            <h4>📝 빠른 응답 - 한국어</h4>
+                            <div class="quick-response-content">
+                                <button class="copy-btn" onclick="copyToClipboard(\`${quickResponse.ko}\`, this)">복사</button>
+                                ${quickResponse.ko}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                document.getElementById('resultContent').innerHTML = resultHTML;
+                document.getElementById('resultSection').classList.add('show');
+
+                // 启动定时提醒
+                if (quickResponse) {
+                    startReminder(eventName, quickResponse);
+                }
+
+            } catch (error) {
+                showError('JSON解析失败：' + error.message);
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 可以在这里添加初始化代码
+        });
+
+        // 页面关闭前清理定时器
+        window.addEventListener('beforeunload', () => {
+            if (reminderTimer) {
+                clearInterval(reminderTimer);
+            }
+        });
+    </script>
+</body>
+</html>
